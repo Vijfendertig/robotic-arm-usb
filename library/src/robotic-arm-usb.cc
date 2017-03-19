@@ -1,3 +1,12 @@
+//! Implementation of the C++11 interface for the Velleman/OWI Robotic Arm.
+/*!
+ *  \file
+ *  \author Maarten De Munck, <maarten@vijfendertig.be>
+ *  \date 2017
+ *  \copyright Licensed under the MIT License. See LICENSE for the full license.
+ */
+
+
 #if __cplusplus < 201103L
   #error "The robotic arm interface requires at least a C++11 compliant compiler."
 #endif
@@ -11,6 +20,12 @@
 
 namespace vijfendertig {
 
+  //! Create a new robotics arm controller object.
+  /*!
+   *  This function initialises the robotics arm controller object and the libusb library. It will
+   *  not connect to or even claim the robotics arm's USB device (use the connect() function for
+   *  that).
+   */
   RoboticArmUsb::RoboticArmUsb():
     libusb_context_{nullptr},
     libusb_device_handle_{nullptr},
@@ -27,6 +42,11 @@ namespace vijfendertig {
     }
   }
 
+  //! Destroy a robotics arm controller object.
+  /*!
+   *  This function will stop the robotics arm's actuators and disconnect from the robotics arm's
+   *  USB device (if not yet done) and deinitialise the libusb library.
+   */
   RoboticArmUsb::~RoboticArmUsb()
   {
     // Disconnect robotic arm.
@@ -37,6 +57,15 @@ namespace vijfendertig {
     }
   }
 
+  //! Connect to a robotics arm's USB device.
+  /*!
+   *  This function will look for (the first available) robotics arm's USB interface, connect to it
+   *  and claim it. It will start separate control thread which will perform all communication to
+   *  the USB device. If the object is already connected to a USB device, a second call to this
+   *  function will be ignored.
+   *
+   *  \returns kConnected on success, kDeviceNotFound or kConnectionFailed on failure.
+   */
   RoboticArmUsb::Status RoboticArmUsb::connect()
   {
     std::lock_guard<std::mutex> lock{serialise_mutex_};
@@ -96,6 +125,14 @@ namespace vijfendertig {
     return connection_state_return;
   }
 
+  //! Disconnect from the robotics arm's USB device.
+  /*!
+   *  This function will stop the robotics arm, terminate (and join) the separate control thread,
+   *  disconnect from the robotics arm's USB interface and release it. If the object is not
+   *  connected to a USB device, a call to this function will be ignored.
+   *
+   *  \return kDisconnected.
+   */
   RoboticArmUsb::Status RoboticArmUsb::disconnect()
   {
     std::lock_guard<std::mutex> lock{serialise_mutex_};
@@ -127,6 +164,12 @@ namespace vijfendertig {
     return Status::kDisconnected;
   }
 
+  //! Verify whether a given command is valid.
+  /*!
+   *  \param actuator Actuator.
+   *  \param action Action.
+   *  \return True if the given action is valid for the actuator, false if not.
+   */
   bool RoboticArmUsb::isCommandValid(
       RoboticArmUsb::Actuator actuator, RoboticArmUsb::Action action)
   {
@@ -146,6 +189,33 @@ namespace vijfendertig {
     }
   }
 
+  //! Verify whether a given composite command is valid.
+  /*!
+   *  \param commands Composite (actuator/action) command.
+   *  \return True if the given actions are valid for their respective actuators, false if not.
+   */
+  bool RoboticArmUsb::isCommandValid(
+      const std::map<RoboticArmUsb::Actuator, RoboticArmUsb::Action> & commands)
+  {
+    if(std::all_of(
+          commands.begin(), commands.end(),
+          [](const std::pair<Actuator, Action> & command) {
+            return isCommandValid(command.first, command.second);
+          })) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  //! Send a command to the robotic arm's interface.
+  /*!
+   *  \param actuator Actuator.
+   *  \param action Action.
+   *  \return kConnected on success, kInvalidCommand if the given command was not valid or
+   *      kIoError on USB errors.
+   */
   RoboticArmUsb::Status RoboticArmUsb::sendCommand(
       RoboticArmUsb::Actuator actuator, RoboticArmUsb::Action action)
   {
@@ -166,13 +236,17 @@ namespace vijfendertig {
     }
   }
 
+  //! Send a composite command to the robotic arm's interface.
+  /*!
+   *  \param commands Composite (actuator/action) command.
+   *  \return kConnected on success, kInvalidCommand if at least one of the given commands was not
+   *      valid or kIoError on USB errors.
+   */
   RoboticArmUsb::Status RoboticArmUsb::sendCommand(
       const std::map<RoboticArmUsb::Actuator, RoboticArmUsb::Action> & commands)
   {
     // Check whether we received a valid command before aqcuiring the mutex.
-    if(!std::all_of(commands.begin(), commands.end(),
-          [this](const std::pair<Actuator, Action> & c){return isCommandValid(c.first, c.second);}
-          )) {
+    if(!isCommandValid(commands)) {
       return Status::kInvalidCommand;
     }
     else {
@@ -190,12 +264,39 @@ namespace vijfendertig {
     }
   }
 
+  //! Send a stop command to the robotic arm's interface.
+  /*!
+   *  \return kConnected on success or kIoError on USB errors.
+   */
+  RoboticArmUsb::Status RoboticArmUsb::sendStop()
+  {
+    Command command_state_stop = 0;
+    std::lock_guard<std::mutex> lock{serialise_mutex_};
+    if(connection_state_ == Status::kConnected && command_state_ != command_state_stop) {
+      // Get lock, update command state and notify control thread.
+      std::lock_guard<std::mutex> lock{control_pending_mutex_};
+      command_state_ = command_state_stop;
+      control_pending_.notify_all();
+    }
+    return connection_state_;
+  }
+
+  //! Get the current status of the robotics arm's control object.
+  /*!
+   *  \return kDisconnected, kConnecting, kConnected, kIoError or kDisconnected, depending on the
+   *      current state of the robotics arm's control object.
+   */
   RoboticArmUsb::Status RoboticArmUsb::getStatus() const
   {
     std::lock_guard<std::mutex> lock{serialise_mutex_};
     return connection_state_;
   }
 
+  //! Translate a status code to a human readable status string.
+  /*!
+   *  \param status Status code to translate.
+   *  \return All lowercase string representation of the given status.
+   */
   std::string RoboticArmUsb::getStatusString(RoboticArmUsb::Status status)
   {
     switch(status) {
@@ -211,6 +312,7 @@ namespace vijfendertig {
     }
   }
 
+  //! Control thread.
   void RoboticArmUsb::controlThread()
   {
     Status connection_state_current{Status::kConnecting};
@@ -244,11 +346,17 @@ namespace vijfendertig {
     sendCommandState(0);
   }
 
+  //! Send a raw command to the robotics arm's USB interface.
+  /*!
+   *  Based on the "OWI Robotic Arm Edge USB protocol (and sampe code)" article at
+   *  <http://notbrainsurgery.livejournal.com/38622.html> by Vadim Zaliva
+   *  <http://www.crocodile.org/lord/>.
+   *
+   *  \param command_state Raw command to send to the USB interface.
+   *  \return kConnected on success or kIoError on failure.
+   */
   RoboticArmUsb::Status RoboticArmUsb::sendCommandState(Command command_state)
   {
-    // Based on the "OWI Robotic Arm Edge USB protocol (and sampe code)" article at
-    // <http://notbrainsurgery.livejournal.com/38622.html> by Vadim Zaliva
-    // <http://www.crocodile.org/lord/>.
     if(int error = libusb_control_transfer(libusb_device_handle_, 0x40, 0x06, 0x100, 0,
           (uint8_t *)&command_state, sizeof(command_state), 0) != sizeof(command_state)) {
       if(error < 0) {
