@@ -1,3 +1,12 @@
+//! Small test program for the Velleman/OWI Robotic Arm's C++11 interface.
+/*!
+ *  \file
+ *  \author Maarten De Munck, <maarten@vijfendertig.be>
+ *  \date 2017
+ *  \copyright Licensed under the MIT License. See LICENSE for the full license.
+ */
+
+
 #include <robotic-arm-usb.h>
 #include <chrono>
 #include <iostream>

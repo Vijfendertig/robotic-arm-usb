@@ -1,6 +1,15 @@
-#ifndef __VIJFENDERTIG__QT_CONTROL_UNIT__MAIN_WINDOW
+//! Declaration of the main window for the Velleman/OWI Robotic Arm's virtual control unit.
+/*!
+ *  \file
+ *  \author Maarten De Munck, <maarten@vijfendertig.be>
+ *  \date 2017
+ *  \copyright Licensed under the MIT License. See LICENSE for the full license.
+ */
 
-  #define __VIJFENDERTIG__QT_CONTROL_UNIT__MAIN_WINDOW
+
+#ifndef __VIJFENDERTIG__QT_CONTROL_UNIT__QT_CONTROL_UNIT_WINDOW
+
+  #define __VIJFENDERTIG__QT_CONTROL_UNIT__QT_CONTROL_UNIT_WINDOW
 
 
   #include <iostream>
@@ -59,4 +68,4 @@
 
   }
 
-#endif // __VIJFENDERTIG__QT_CONTROL_UNIT__MAIN_WINDOW
+#endif // __VIJFENDERTIG__QT_CONTROL_UNIT__QT_CONTROL_UNIT_WINDOW
