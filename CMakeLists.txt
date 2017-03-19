@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.6)
 
 #
 # Project name.
@@ -16,14 +16,19 @@ set(CMAKE_BUILD_TYPE Release)
 # Add CMake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 
-# libusb 1.0 is required.
+# libusb 1.0 is required for the library.
 find_package(LibUSB REQUIRED)
+
+# Qt4 is required for the qt-control-unit example.
+find_package(Qt4 REQUIRED)
+include(${QT_USE_FILE})
 
 # Set compiler options.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include_directories(
 	${LibUSB_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}/library/include
+	${CMAKE_BINARY_DIR}
 )
 
 
@@ -50,3 +55,25 @@ add_executable(test-library
 target_link_libraries(test-library
 	roboticarmusb
 )
+
+#
+# Qt control unit (resembling the physical control unit).
+#
+
+qt4_wrap_cpp(QT_CONTROL_UNIT_HPP
+       	examples/qt-control-unit/include/qt-control-unit-window.h
+)
+qt4_wrap_ui(QT_CONTROL_UNIT_UI
+       	examples/qt-control-unit/ui/qt-control-unit.ui
+)
+add_executable(qt-control-unit
+	examples/qt-control-unit/src/main.cc
+	examples/qt-control-unit/src/qt-control-unit-window.cc
+	${QT_CONTROL_UNIT_HPP}
+	${QT_CONTROL_UNIT_UI}
+)
+target_link_libraries(qt-control-unit
+	${QT_LIBRARIES}
+	roboticarmusb
+)
+
