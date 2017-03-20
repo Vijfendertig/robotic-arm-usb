@@ -66,11 +66,15 @@ qt4_wrap_cpp(QT_CONTROL_UNIT_HPP
 qt4_wrap_ui(QT_CONTROL_UNIT_UI
        	examples/qt-control-unit/ui/qt-control-unit.ui
 )
+qt4_add_resources(QT_CONTROL_UNIT_RESOURCES
+	examples/qt-control-unit/resources/robotic-arm.qrc
+)
 add_executable(qt-control-unit
 	examples/qt-control-unit/src/main.cc
 	examples/qt-control-unit/src/qt-control-unit-window.cc
 	${QT_CONTROL_UNIT_HPP}
 	${QT_CONTROL_UNIT_UI}
+	${QT_CONTROL_UNIT_RESOURCES}
 )
 target_link_libraries(qt-control-unit
 	${QT_LIBRARIES}

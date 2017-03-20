@@ -1,0 +1,15 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource relative="/">
+    <file>./icons/robotic-arm-16x16.png</file>
+    <file>./icons/robotic-arm-24x24.png</file>
+    <file>./icons/robotic-arm-32x32.png</file>
+    <file>./icons/robotic-arm-48x48.png</file>
+    <file>./icons/robotic-arm-64x64.png</file>
+    <file>./icons/robotic-arm-96x96.png</file>
+    <file>./icons/robotic-arm-128x128.png</file>
+    <file>./icons/robotic-arm-256x256.png</file>
+    <file>./icons/robotic-arm-512x512.png</file>
+    <file>./icons/robotic-arm-1024x1024.png</file>
+  </qresource>
+</RCC>
