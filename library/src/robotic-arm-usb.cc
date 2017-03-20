@@ -100,19 +100,23 @@ namespace vijfendertig {
           connection_state_ = Status::kDisconnected;
           connection_state_return = Status::kConnectionFailed;
         }
-        if(int error = libusb_claim_interface(libusb_device_handle_, 0) != LIBUSB_SUCCESS) {
-          std::string message{"An error occured while claiming the robotics arm's USB interface: "
-            "libusb error: " + std::string(libusb_error_name(error))
-            + " (" + std::to_string(error) + ")"};
-          std::cerr << message << "." << std::endl;
-          connection_state_ = Status::kDisconnected;
-          connection_state_return = Status::kConnectionFailed;
+        else {
+          if(int error = libusb_claim_interface(libusb_device_handle_, 0) != LIBUSB_SUCCESS) {
+            std::string message{"An error occured while claiming the robotics arm's USB interface: "
+              "libusb error: " + std::string(libusb_error_name(error))
+              + " (" + std::to_string(error) + ")"};
+            std::cerr << message << "." << std::endl;
+            connection_state_ = Status::kDisconnected;
+            connection_state_return = Status::kConnectionFailed;
+          }
+          else {
+            control_thread_ = std::thread(&RoboticArmUsb::controlThread, this);
+            std::unique_lock<std::mutex> initialisation_lock{initialisation_finished_mutex_};
+            initialisation_finished_.wait(initialisation_lock,
+                [this]{return connection_state_ != Status::kConnecting;});
+            connection_state_return = connection_state_;
+          }
         }
-        control_thread_ = std::thread(&RoboticArmUsb::controlThread, this);
-        std::unique_lock<std::mutex> initialisation_lock{initialisation_finished_mutex_};
-        initialisation_finished_.wait(initialisation_lock,
-            [this]{return connection_state_ != Status::kConnecting;});
-        connection_state_return = connection_state_;
       }
       else {
         std::string message{"The robotics arm's USB device is not found"};
