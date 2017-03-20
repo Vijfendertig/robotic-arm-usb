@@ -47,21 +47,46 @@ standard USB interface and some custom software.
 
 ## Included examples
 
-### test_library
+### test-library
 
 This small example shows how to connect to and disconnect from the robotic arm and how to send
 commands to it. Nothing fancy at all.
+
+### qt-control-unit
+
+This example implements a Qt control unit resembling the robotics arm's original control unit.
+
+Use the "Connect" and "Disconnect" buttons to connect the control unit to the robotics arm's USB
+device and the other buttons to control the robot's actuators.
 
 
 ## Building the library and the examples
 
 To build the library and the examples, go to the build directory and run CMake and Make:
-
 ```
 $ cd build
 $ cmake ..
 $ make
 ```
+
+### Permissions to the USB device
+
+Make sure you have read and write access to the USB device. An error message "An error occured while
+opening the robotics arm's USB device: libusb error: LIBUSB_TRANSFER_ERROR (1)" when connecting to
+the robotics arm's USB device probably means you don't have write access the USB device.
+
+To correct, either manually change the access rights to the device in `/dev/bus/usb` (lsusb gives
+you the bus and device ID's) every time you connect the device or configure udev once by creating
+a file `/etc/udev/rules.d/99-robotics-arm-usb.rules` containing
+```
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1267", ATTRS{idProduct}=="0000", MODE="0666"
+```
+Run
+```
+# udevadm control --reload-rules
+# udevadm trigger
+```
+(as root or using sudo) to load the new udev rule and trigger it without rebooting.
 
 
 ## License
