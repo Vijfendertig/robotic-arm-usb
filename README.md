@@ -54,9 +54,9 @@ commands to it. Nothing fancy at all.
 
 ### qt-control-unit
 
-This example implements a Qt control unit resembling the robotics arm's original control unit.
+This example implements a Qt control unit resembling the robotic arm's original control unit.
 
-Use the "Connect" and "Disconnect" buttons to connect the control unit to the robotics arm's USB
+Use the "Connect" and "Disconnect" buttons to connect the control unit to the robotic arm's USB
 device and the other buttons to control the robot's actuators.
 
 
@@ -72,12 +72,12 @@ $ make
 ### Permissions to the USB device
 
 Make sure you have read and write access to the USB device. An error message "An error occured while
-opening the robotics arm's USB device: libusb error: LIBUSB_TRANSFER_ERROR (1)" when connecting to
-the robotics arm's USB device probably means you don't have write access the USB device.
+opening the robotic arm's USB device: libusb error: LIBUSB_TRANSFER_ERROR (1)" when connecting to
+the robotic arm's USB device probably means you don't have write access the USB device.
 
 To correct, either manually change the access rights to the device in `/dev/bus/usb` (lsusb gives
 you the bus and device ID's) every time you connect the device or configure udev once by creating
-a file `/etc/udev/rules.d/99-robotics-arm-usb.rules` containing
+a file `/etc/udev/rules.d/99-robotic-arm-usb.rules` containing
 ```
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="1267", ATTRS{idProduct}=="0000", MODE="0666"
 ```

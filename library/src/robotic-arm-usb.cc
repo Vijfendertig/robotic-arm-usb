@@ -20,10 +20,10 @@
 
 namespace vijfendertig {
 
-  //! Create a new robotics arm controller object.
+  //! Create a new robotic arm controller object.
   /*!
-   *  This function initialises the robotics arm controller object and the libusb library. It will
-   *  not connect to or even claim the robotics arm's USB device (use the connect() function for
+   *  This function initialises the robotic arm controller object and the libusb library. It will
+   *  not connect to or even claim the robotic arm's USB device (use the connect() function for
    *  that).
    */
   RoboticArmUsb::RoboticArmUsb():
@@ -42,9 +42,9 @@ namespace vijfendertig {
     }
   }
 
-  //! Destroy a robotics arm controller object.
+  //! Destroy a robotic arm controller object.
   /*!
-   *  This function will stop the robotics arm's actuators and disconnect from the robotics arm's
+   *  This function will stop the robotic arm's actuators and disconnect from the robotic arm's
    *  USB device (if not yet done) and deinitialise the libusb library.
    */
   RoboticArmUsb::~RoboticArmUsb()
@@ -57,9 +57,9 @@ namespace vijfendertig {
     }
   }
 
-  //! Connect to a robotics arm's USB device.
+  //! Connect to a robotic arm's USB device.
   /*!
-   *  This function will look for (the first available) robotics arm's USB interface, connect to it
+   *  This function will look for (the first available) robotic arm's USB interface, connect to it
    *  and claim it. It will start separate control thread which will perform all communication to
    *  the USB device. If the object is already connected to a USB device, a second call to this
    *  function will be ignored.
@@ -93,7 +93,7 @@ namespace vijfendertig {
       }
       if(device_found != nullptr) {
         if(int error = libusb_open(device_found, &libusb_device_handle_) != LIBUSB_SUCCESS) {
-          std::string message{"An error occured while opening the robotics arm's USB device: "
+          std::string message{"An error occured while opening the robotic arm's USB device: "
             "libusb error: " + std::string(libusb_error_name(error))
             + " (" + std::to_string(error) + ")"};
           std::cerr << message << "." << std::endl;
@@ -102,7 +102,7 @@ namespace vijfendertig {
         }
         else {
           if(int error = libusb_claim_interface(libusb_device_handle_, 0) != LIBUSB_SUCCESS) {
-            std::string message{"An error occured while claiming the robotics arm's USB interface: "
+            std::string message{"An error occured while claiming the robotic arm's USB interface: "
               "libusb error: " + std::string(libusb_error_name(error))
               + " (" + std::to_string(error) + ")"};
             std::cerr << message << "." << std::endl;
@@ -119,7 +119,7 @@ namespace vijfendertig {
         }
       }
       else {
-        std::string message{"The robotics arm's USB device is not found"};
+        std::string message{"The robotic arm's USB device is not found"};
         std::cerr << message << "." << std::endl;
         connection_state_ = Status::kDisconnected;
         connection_state_return = Status::kDeviceNotFound;
@@ -129,10 +129,10 @@ namespace vijfendertig {
     return connection_state_return;
   }
 
-  //! Disconnect from the robotics arm's USB device.
+  //! Disconnect from the robotic arm's USB device.
   /*!
-   *  This function will stop the robotics arm, terminate (and join) the separate control thread,
-   *  disconnect from the robotics arm's USB interface and release it. If the object is not
+   *  This function will stop the robotic arm, terminate (and join) the separate control thread,
+   *  disconnect from the robotic arm's USB interface and release it. If the object is not
    *  connected to a USB device, a call to this function will be ignored.
    *
    *  \return kDisconnected.
@@ -285,10 +285,10 @@ namespace vijfendertig {
     return connection_state_;
   }
 
-  //! Get the current status of the robotics arm's control object.
+  //! Get the current status of the robotic arm's control object.
   /*!
    *  \return kDisconnected, kConnecting, kConnected, kIoError or kDisconnected, depending on the
-   *      current state of the robotics arm's control object.
+   *      current state of the robotic arm's control object.
    */
   RoboticArmUsb::Status RoboticArmUsb::getStatus() const
   {
@@ -350,7 +350,7 @@ namespace vijfendertig {
     sendCommandState(0);
   }
 
-  //! Send a raw command to the robotics arm's USB interface.
+  //! Send a raw command to the robotic arm's USB interface.
   /*!
    *  Based on the "OWI Robotic Arm Edge USB protocol (and sampe code)" article at
    *  <http://notbrainsurgery.livejournal.com/38622.html> by Vadim Zaliva
@@ -364,13 +364,13 @@ namespace vijfendertig {
     if(int error = libusb_control_transfer(libusb_device_handle_, 0x40, 0x06, 0x100, 0,
           (uint8_t *)&command_state, sizeof(command_state), 0) != sizeof(command_state)) {
       if(error < 0) {
-        std::string message{"An error occured while sending a command to the robotics arm: "
+        std::string message{"An error occured while sending a command to the robotic arm: "
           "libusb error: " + std::string(libusb_error_name(error))
           + " (" + std::to_string(error) + ")"};
         std::cerr << message << "." << std::endl;
       }
       else {
-        std::string message{"An error occured while sending a command to the robotics arm: "
+        std::string message{"An error occured while sending a command to the robotic arm: "
           + std::to_string(error) + " of "
           + std::to_string(sizeof(command_state)) + " bytes sent"};
         std::cerr << message << "." << std::endl;

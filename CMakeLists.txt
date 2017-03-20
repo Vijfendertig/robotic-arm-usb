@@ -33,7 +33,7 @@ include_directories(
 
 
 #
-# Interface to the Velleman/OWI robotics arm's USB interface as a shared library.
+# Interface to the Velleman/OWI robotic arm's USB interface as a shared library.
 #
 
 add_library(roboticarmusb SHARED

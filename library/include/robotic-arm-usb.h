@@ -42,12 +42,12 @@
 
         //! Status and error definitions.
         enum class Status: int8_t {
-          kDisconnected = 0,      //!< Disconnected from the robotics arm's USB interface.
-          kConnecting = 1,        //!< Connecting to the robotics arm's USB interface.
-          kConnected = 2,         //!< Connected to the robotics arm's USB interface.
+          kDisconnected = 0,      //!< Disconnected from the robotic arm's USB interface.
+          kConnecting = 1,        //!< Connecting to the robotic arm's USB interface.
+          kConnected = 2,         //!< Connected to the robotic arm's USB interface.
           kIoError = 3,           //!< An I/O error occurred. Reconnecting is required.
-          kDisconnecting = 4,     //!< Disconnecting from the robotics arm's USB interface.
-          kDeviceNotFound = -1,   //!< The robotics arm's USB interface was not found.
+          kDisconnecting = 4,     //!< Disconnecting from the robotic arm's USB interface.
+          kDeviceNotFound = -1,   //!< The robotic arm's USB interface was not found.
           kConnectionFailed = -2, //!< The connection to the robotic arms's USB interface failed.
           kInvalidCommand = -3,   //!< The given command is not valid.
         };
