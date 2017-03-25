@@ -108,6 +108,9 @@ namespace vijfendertig {
             std::cerr << message << "." << std::endl;
             connection_state_ = Status::kDisconnected;
             connection_state_return = Status::kConnectionFailed;
+            libusb_release_interface(libusb_device_handle_, 0);
+            libusb_close(libusb_device_handle_);
+            libusb_device_handle_ = nullptr;
           }
           else {
             control_thread_ = std::thread(&RoboticArmUsb::controlThread, this);
