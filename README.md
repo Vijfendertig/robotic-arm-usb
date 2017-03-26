@@ -72,7 +72,7 @@ $ make
 ### Permissions to the USB device
 
 Make sure you have read and write access to the USB device. An error message "An error occured while
-opening the robotic arm's USB device: libusb error: LIBUSB_TRANSFER_ERROR (1)" when connecting to
+opening the robotic arm's USB device: libusb error: LIBUSB_ERROR_ACCESS (-3)" when connecting to
 the robotic arm's USB device probably means you don't have write access the USB device.
 
 To correct, either manually change the access rights to the device in `/dev/bus/usb` (lsusb gives
