@@ -15,6 +15,7 @@
 #include <robotic-arm-usb.h>
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 
 
@@ -33,7 +34,8 @@ namespace vijfendertig {
     command_state_{0}
   {
     // Initialise libusb.
-    if(int error = libusb_init(&libusb_context_) != LIBUSB_SUCCESS) {
+    int error = libusb_init(&libusb_context_);
+    if(error != LIBUSB_SUCCESS) {
       std::string message{"An error occured while initialising the robotic arm driver: "
         "libusb error: " + std::string(libusb_error_name(error))
         + " (" + std::to_string(error) + ")"};
@@ -78,6 +80,7 @@ namespace vijfendertig {
         throw std::logic_error(message);
       }
       connection_state_ = Status::kConnecting;
+      // Find device with given vendor and product id.
       libusb_device ** device_list{nullptr};
       libusb_device * device_found{nullptr};
       ssize_t device_count = libusb_get_device_list(libusb_context_, &device_list);
@@ -91,41 +94,80 @@ namespace vijfendertig {
           }
         }
       }
-      if(device_found != nullptr) {
-        if(int error = libusb_open(device_found, &libusb_device_handle_) != LIBUSB_SUCCESS) {
-          std::string message{"An error occured while opening the robotic arm's USB device: "
-            "libusb error: " + std::string(libusb_error_name(error))
-            + " (" + std::to_string(error) + ")"};
-          std::cerr << message << "." << std::endl;
-          connection_state_ = Status::kDisconnected;
-          connection_state_return = Status::kConnectionFailed;
-        }
-        else {
-          if(int error = libusb_claim_interface(libusb_device_handle_, 0) != LIBUSB_SUCCESS) {
-            std::string message{"An error occured while claiming the robotic arm's USB interface: "
-              "libusb error: " + std::string(libusb_error_name(error))
-              + " (" + std::to_string(error) + ")"};
-            std::cerr << message << "." << std::endl;
-            connection_state_ = Status::kDisconnected;
-            connection_state_return = Status::kConnectionFailed;
-            libusb_release_interface(libusb_device_handle_, 0);
-            libusb_close(libusb_device_handle_);
-            libusb_device_handle_ = nullptr;
-          }
-          else {
-            control_thread_ = std::thread(&RoboticArmUsb::controlThread, this);
-            std::unique_lock<std::mutex> initialisation_lock{initialisation_finished_mutex_};
-            initialisation_finished_.wait(initialisation_lock,
-                [this]{return connection_state_ != Status::kConnecting;});
-            connection_state_return = connection_state_;
-          }
-        }
-      }
-      else {
+      if(device_found == nullptr) { // Clean up if the device was not found.
         std::string message{"The robotic arm's USB device is not found"};
         std::cerr << message << "." << std::endl;
         connection_state_ = Status::kDisconnected;
         connection_state_return = Status::kDeviceNotFound;
+      }
+      else { // Try to open the device if it was found.
+        int error_open = libusb_open(device_found, &libusb_device_handle_);
+        if(error_open != LIBUSB_SUCCESS) { // Clean up if open failed.
+          std::string message{"An error occured while opening the robotic arm's USB device: "
+            "libusb error: " + std::string(libusb_error_name(error_open))
+            + " (" + std::to_string(error_open) + ")"};
+          std::cerr << message << "." << std::endl;
+          connection_state_ = Status::kDisconnected;
+          connection_state_return = Status::kConnectionFailed;
+        }
+        else { // Check configuration if open succeeded.
+          int config;
+          int error_config_get = libusb_get_configuration(libusb_device_handle_, &config);
+          if(error_config_get != LIBUSB_SUCCESS) { // Clean up if check configuration failed.
+            std::string message{"An error occured while reading the active configuration of the "
+              "robotic arm's USB device: libusb error: "
+              + std::string(libusb_error_name(error_config_get))
+              + " (" + std::to_string(error_config_get) + ")"};
+            std::cerr << message << "." << std::endl;
+            connection_state_ = Status::kDisconnected;
+            connection_state_return = Status::kConnectionFailed;
+            libusb_close(libusb_device_handle_);
+            libusb_device_handle_ = nullptr;
+          }
+          else {
+            if(config == 0) { // Try to configure if device is not yet configured.
+              int error_config_set = libusb_set_configuration(libusb_device_handle_, 1);
+              if(error_config_set != LIBUSB_SUCCESS) { // Clean up if configuration failed.
+                std::string message{"An error occured while setting the configuration of the "
+                  "robotic arm's USB device: libusb error: "
+                  + std::string(libusb_error_name(error_config_set))
+                  + " (" + std::to_string(error_config_set) + ")"};
+                std::cerr << message << "." << std::endl;
+                connection_state_ = Status::kDisconnected;
+                connection_state_return = Status::kConnectionFailed;
+                libusb_close(libusb_device_handle_);
+                libusb_device_handle_ = nullptr;
+              }
+              else { // Set new configuration if configuration succeeded.
+                config = 1;
+              }
+            }
+            if(config > 0) { // Try to claim interface if device is configured.
+              int error_claim = libusb_claim_interface(libusb_device_handle_, 0);
+              if(error_claim != LIBUSB_SUCCESS) { // Clean up if claiming interface failed.
+                std::string message{"An error occured while claiming the robotic arm's USB "
+                  "interface: libusb error: " + std::string(libusb_error_name(error_claim))
+                  + " (" + std::to_string(error_claim) + ")"};
+                std::cerr << message << "." << std::endl;
+                connection_state_ = Status::kDisconnected;
+                connection_state_return = Status::kConnectionFailed;
+                libusb_release_interface(libusb_device_handle_, 0);
+                libusb_close(libusb_device_handle_);
+                libusb_device_handle_ = nullptr;
+              }
+              else { // Start control thread if claiming interface succeeded.
+                control_thread_ = std::thread(&RoboticArmUsb::controlThread, this);
+                std::unique_lock<std::mutex> initialisation_lock{initialisation_finished_mutex_};
+                initialisation_finished_.wait(initialisation_lock,
+                    [this]{return connection_state_ != Status::kConnecting;});
+                connection_state_return = connection_state_;
+              }
+            }
+            else {
+              // The device is not configured, but we did print an error message already.
+            }
+          }
+        }
       }
       libusb_free_device_list(device_list, 1);
     }
@@ -364,8 +406,9 @@ namespace vijfendertig {
    */
   RoboticArmUsb::Status RoboticArmUsb::sendCommandState(Command command_state)
   {
-    if(int error = libusb_control_transfer(libusb_device_handle_, 0x40, 0x06, 0x100, 0,
-          (uint8_t *)&command_state, sizeof(command_state), 0) != sizeof(command_state)) {
+    int error = libusb_control_transfer(libusb_device_handle_, 0x40, 0x06, 0x100, 0,
+        (uint8_t *)&command_state, sizeof(command_state), 0);
+    if(error != sizeof(command_state)) {
       if(error < 0) {
         std::string message{"An error occured while sending a command to the robotic arm: "
           "libusb error: " + std::string(libusb_error_name(error))
