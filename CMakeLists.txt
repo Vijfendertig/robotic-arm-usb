@@ -12,6 +12,7 @@ project(robotic-arm-usb)
 
 # Select 'Release' or 'Debug' build.
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Add CMake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
@@ -24,7 +25,8 @@ find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 
 # Set compiler options.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
 include_directories(
 	${LibUSB_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}/library/include
