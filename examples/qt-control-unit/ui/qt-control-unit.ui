@@ -644,6 +644,22 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>button_connect</tabstop>
+  <tabstop>button_disconnect</tabstop>
+  <tabstop>button_gripper_close</tabstop>
+  <tabstop>button_gripper_open</tabstop>
+  <tabstop>button_wrist_up</tabstop>
+  <tabstop>button_wrist_down</tabstop>
+  <tabstop>button_elbow_up</tabstop>
+  <tabstop>button_elbow_down</tabstop>
+  <tabstop>button_shoulder_up</tabstop>
+  <tabstop>button_shoulder_down</tabstop>
+  <tabstop>button_base_ccw</tabstop>
+  <tabstop>button_base_cw</tabstop>
+  <tabstop>button_light_off</tabstop>
+  <tabstop>button_light_on</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
